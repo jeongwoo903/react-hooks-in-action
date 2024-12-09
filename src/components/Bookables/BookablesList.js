@@ -1,20 +1,47 @@
-import {useState, Fragment} from 'react';
-import staticDB from "../../static.json";
-import {FaArrowRight} from "react-icons/fa";
+import { useReducer, Fragment } from 'react'
+import staticDB from '../../static.json'
+import { FaArrowRight } from 'react-icons/fa'
+
+import reducer from './reducer'
+
+const { bookables, sessions, days } = staticDB
+
+const initialState = {
+  group: 'Rooms',
+  bookableIndex: 0,
+  hasDetails: true,
+  bookables
+}
 
 export default function BookablesList () {
-  const {bookables, sessions, days} = staticDB;
-  const [group, setGroup] = useState("Kit");
-  const bookablesInGroup = bookables.filter(b => b.group === group);
-  const [bookableIndex, setBookableIndex] = useState(0);
-  const groups = [...new Set(bookables.map(b => b.group))];
+  const [state, dispatch] = useReducer(reducer, initialState)
 
-  const bookable = bookablesInGroup[bookableIndex];
+  const { group, bookableIndex, bookables, hasDetails } = state
 
-  const [hasDetails, setHasDetails] = useState(false);
+  const bookablesInGroup = bookables.filter(b => b.group === group)
+  const bookable = bookablesInGroup[bookableIndex]
+  const groups = [...new Set(bookables.map(b => b.group))]
+
+  function changeGroup (e) {
+    dispatch({
+      type: 'SET_GROUP',
+      payload: e.target.value
+    })
+  }
+
+  function changeBookable (selectedIndex) {
+    dispatch({
+      type: 'SET_BOOKABLE',
+      payload: selectedIndex
+    })
+  }
 
   function nextBookable () {
-    setBookableIndex(i => (i + 1) % bookablesInGroup.length);
+    dispatch({ type: 'NEXT_BOOKABLE' })
+  }
+
+  function toggleDetails () {
+    dispatch({ type: 'TOGGLE_HAS_DETAILS' })
   }
 
   return (
@@ -22,7 +49,7 @@ export default function BookablesList () {
       <div>
         <select
           value={group}
-          onChange={(e) => setGroup(e.target.value)}
+          onChange={changeGroup}
         >
           {groups.map(g => <option value={g} key={g}>{g}</option>)}
         </select>
@@ -31,11 +58,11 @@ export default function BookablesList () {
           {bookablesInGroup.map((b, i) => (
             <li
               key={b.id}
-              className={i === bookableIndex ? "selected" : null}
+              className={i === bookableIndex ? 'selected' : null}
             >
               <button
                 className="btn"
-                onClick={() => setBookableIndex(i)}
+                onClick={() => changeBookable(i)}
               >
                 {b.title}
               </button>
@@ -66,7 +93,7 @@ export default function BookablesList () {
                   <input
                     type="checkbox"
                     checked={hasDetails}
-                    onChange={() => setHasDetails(has => !has)}
+                    onChange={toggleDetails}
                   />
                   Show Details
                 </label>
@@ -81,13 +108,13 @@ export default function BookablesList () {
                 <div className="bookable-availability">
                   <ul>
                     {bookable.days
-                      .sort()
-                      .map(d => <li key={d}>{days[d]}</li>)
+                    .sort()
+                    .map(d => <li key={d}>{days[d]}</li>)
                     }
                   </ul>
                   <ul>
                     {bookable.sessions
-                      .map(s => <li key={s}>{sessions[s]}</li>)
+                    .map(s => <li key={s}>{sessions[s]}</li>)
                     }
                   </ul>
                 </div>
@@ -97,5 +124,5 @@ export default function BookablesList () {
         </div>
       )}
     </Fragment>
-  );
+  )
 }
